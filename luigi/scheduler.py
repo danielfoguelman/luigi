@@ -831,6 +831,7 @@ class Scheduler(object):
         * add additional workers/stakeholders
         * update priority when needed
         """
+        logger.info(f'add_task: parameter {task_id} - {status}')
         assert worker is not None
         worker_id = worker
         worker = self._update_worker(worker_id)
@@ -851,6 +852,7 @@ class Scheduler(object):
             _default_task = None
 
         task = self._state.get_task(task_id, setdefault=_default_task)
+        logger.info(f'add_task: found {task}')
 
         if task is None or (task.status != RUNNING and not worker.enabled):
             return
@@ -872,6 +874,7 @@ class Scheduler(object):
         if batch_id is not None:
             task.batch_id = batch_id
         if status == RUNNING and not task.worker_running:
+            logger.info(f'add_task: task running but no worker running {task}')
             task.worker_running = worker_id
             if batch_id:
                 # copy resources_running of the first batch task
@@ -903,9 +906,13 @@ class Scheduler(object):
         task_is_not_running = task.status not in (RUNNING, BATCH_RUNNING)
         task_started_a_run = status in (DONE, FAILED, RUNNING)
         running_on_this_worker = task.worker_running == worker_id
+        logger.info(f'add_task: task not running {task_is_not_running} task started {task_started_a_run} in this worker {running_on_this_worker}')
+
         if task_is_not_running or (task_started_a_run and running_on_this_worker) or new_deps:
             # don't allow re-scheduling of task while it is running, it must either fail or succeed on the worker actually running it
             if status != task.status or status == PENDING:
+                logger.info(f'add_task: status changed')
+
                 # Update the DB only if there was a acctual change, to prevent noise.
                 # We also check for status == PENDING b/c that's the default value
                 # (so checking for status != task.status woule lie)
@@ -959,6 +966,7 @@ class Scheduler(object):
 
         if runnable and status != FAILED and worker.enabled:
             task.workers.add(worker_id)
+            logger.info(f'add_task: assigned task to worker {worker_id} is runnable {runnable}')
             self._state.get_worker(worker_id).tasks.add(task)
             task.runnable = runnable
 
@@ -1157,6 +1165,7 @@ class Scheduler(object):
 
         if self._config.prune_on_get_work:
             self.prune()
+        logger.info(f"get_work: Worker {worker} asking for work")
 
         assert worker is not None
         worker_id = worker
@@ -1183,6 +1192,7 @@ class Scheduler(object):
             for task in sorted(self._state.get_active_tasks_by_status(RUNNING), key=self._rank):
                 if task.worker_running == worker_id and task.id not in ct_set:
                     best_task = task
+                    logger.info(f"get_work: best task {task} based on L1183")
 
         if current_tasks is not None:
             # batch running tasks that weren't claimed since the last get_work go back in the pool
@@ -1222,10 +1232,15 @@ class Scheduler(object):
                 greedy_workers[task.worker_running] -= 1
                 for resource, amount in six.iteritems((getattr(task, 'resources_running', task.resources) or {})):
                     greedy_resources[resource] += amount
+            logger.info(f"get_work: task {task}")
+            logger.info(f"get_work: resources {task.resources}")
+            logger.info(f"get_work: greedy_resources {json.dumps(greedy_resources, indent=2)}")
 
             if self._schedulable(task) and self._has_resources(task.resources, greedy_resources):
+                logger.info(f"get_work: task is schedulable and has resources")
                 in_workers = (assistant and task.runnable) or worker_id in task.workers
                 if in_workers and self._has_resources(task.resources, used_resources):
+                    logger.info(f"get_work: task in_workers")
                     best_task = task
                     batch_param_names, max_batch_size = self._state.get_batcher(
                         worker_id, task.family)
@@ -1243,6 +1258,7 @@ class Scheduler(object):
                             batched_params, unbatched_params = None, None
                 else:
                     workers = itertools.chain(task.workers, [worker_id]) if assistant else task.workers
+                    logger.info(f"get_work: assigning task to worker")
                     for task_worker in workers:
                         if greedy_workers.get(task_worker, 0) > 0:
                             # use up a worker
@@ -1257,6 +1273,8 @@ class Scheduler(object):
         reply = self.count_pending(worker_id)
 
         if len(batched_tasks) > 1:
+            logger.info(f"get_work: batched task assignment of {batched_tasks}")
+
             batch_string = '|'.join(task.id for task in batched_tasks)
             batch_id = hashlib.md5(batch_string.encode('utf-8')).hexdigest()
             for task in batched_tasks:
@@ -1273,6 +1291,7 @@ class Scheduler(object):
             reply['batch_task_ids'] = [task.id for task in batched_tasks]
 
         elif best_task:
+            logger.info(f"get_work: best task assignment of {best_task}")
             self.update_metrics_task_started(best_task)
             self._state.set_status(best_task, RUNNING, self._config)
             best_task.worker_running = worker_id
@@ -1287,6 +1306,8 @@ class Scheduler(object):
 
         else:
             reply['task_id'] = None
+
+        logger.info(f"get_work: reply {json.dumps(reply, indent=2)}")
 
         return reply
 

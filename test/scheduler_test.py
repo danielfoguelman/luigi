@@ -301,6 +301,15 @@ class SchedulerWorkerTest(unittest.TestCase):
         non_trivial_worker = scheduler_state.get_worker('NON_TRIVIAL')
         self.assertEqual({'A'}, self.get_pending_ids(non_trivial_worker, scheduler_state))
 
+    def test_get_running_task_but_pending(self):
+        sch = luigi.scheduler.Scheduler()
+        sch.add_task(worker='NON_TRIVIAL', task_id='A', status='RUNNING', resources={'a': 1})
+        sch.add_task(worker='TRIVIAL', task_id='A', status='PENDING', resources={'a': 1})
+
+        scheduler_state = sch._state
+        task = scheduler_state.get_task('A')
+        self.assertEqual('RUNNING', task.status)
+
 
 class FailingOnDoubleRunTask(luigi.Task):
     time_to_check_secs = 1

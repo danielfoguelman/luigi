@@ -949,7 +949,7 @@ class Worker(object):
             return GetWorkResponse(None, 0, 0, 0, 0, WORKER_STATE_DISABLED)
 
         if self.worker_processes > 0:
-            logger.debug("Asking scheduler for work...")
+            logger.info("Asking scheduler for work...")
             r = self._scheduler.get_work(
                 worker=self._id,
                 host=self.host,
@@ -957,7 +957,7 @@ class Worker(object):
                 current_tasks=list(self._running_tasks.keys()),
             )
         else:
-            logger.debug("Checking if tasks are still pending")
+            logger.info("Checking if tasks are still pending")
             r = self._scheduler.count_pending(worker=self._id)
 
         running_tasks = r['running_tasks']
