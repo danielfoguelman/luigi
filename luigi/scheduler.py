@@ -56,7 +56,7 @@ from luigi.parameter import ParameterVisibility
 
 from luigi.metrics import MetricsCollectors
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('luigi-interface')
 
 UPSTREAM_RUNNING = 'UPSTREAM_RUNNING'
 UPSTREAM_MISSING_INPUT = 'UPSTREAM_MISSING_INPUT'
