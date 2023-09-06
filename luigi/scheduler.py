@@ -831,7 +831,7 @@ class Scheduler(object):
         * add additional workers/stakeholders
         * update priority when needed
         """
-        logger.info(f'add_task: parameter {task_id} - {status}')
+        logger.info(f'add_task: {task_id}: status {status} resources {resources}')
         assert worker is not None
         worker_id = worker
         worker = self._update_worker(worker_id)
@@ -874,7 +874,7 @@ class Scheduler(object):
         if batch_id is not None:
             task.batch_id = batch_id
         if status == RUNNING and not task.worker_running:
-            logger.info(f'add_task: task running but no worker running {task}')
+            logger.info(f'add_task: task running but no worker running {task}, assigning {worker_id}')
             task.worker_running = worker_id
             if batch_id:
                 # copy resources_running of the first batch task
@@ -911,7 +911,8 @@ class Scheduler(object):
         if task_is_not_running or (task_started_a_run and running_on_this_worker) or new_deps:
             # don't allow re-scheduling of task while it is running, it must either fail or succeed on the worker actually running it
             if status != task.status or status == PENDING:
-                logger.info(f'add_task: status changed')
+                logger.info(f'add_task: status changed: before {status}, now {task.status}')
+
 
                 # Update the DB only if there was a acctual change, to prevent noise.
                 # We also check for status == PENDING b/c that's the default value
@@ -1166,6 +1167,7 @@ class Scheduler(object):
         if self._config.prune_on_get_work:
             self.prune()
         logger.info(f"get_work: Worker {worker} asking for work")
+        logger.info(f"get_work: current_tasks {current_tasks}")
 
         assert worker is not None
         worker_id = worker

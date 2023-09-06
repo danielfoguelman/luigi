@@ -956,6 +956,8 @@ class Worker(object):
                 assistant=self._assistant,
                 current_tasks=list(self._running_tasks.keys()),
             )
+            logger.info(f"get_work: (worker, sch response) {r}")
+
         else:
             logger.info("Checking if tasks are still pending")
             r = self._scheduler.count_pending(worker=self._id)
@@ -1006,6 +1008,7 @@ class Worker(object):
             return
 
         task = self._scheduled_tasks[task_id]
+        logger.info(f'run_task: running {task_id} - {task}')
 
         task_process = self._create_task_process(task)
 
