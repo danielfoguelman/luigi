@@ -50,6 +50,7 @@ import threading
 import time
 import traceback
 import types
+import pprint
 
 from luigi import six
 
@@ -590,6 +591,7 @@ class Worker(object):
         if task and kwargs.get('params'):
             kwargs['param_visibilities'] = task._get_param_visibilities()
 
+        logger.info(f'worker add task: task_id {task_id}, task {task}, *args {pprint.pformat(args)}, **kwargs {pprint.pformat(kwargs)}')
         self._scheduler.add_task(*args, **kwargs)
 
         logger.info('Informed scheduler that task   %s   has status   %s', task_id, status)
@@ -956,7 +958,7 @@ class Worker(object):
                 assistant=self._assistant,
                 current_tasks=list(self._running_tasks.keys()),
             )
-            logger.info(f"get_work: (worker, sch response) {r}")
+            logger.info(f"get_work: {r.task_id}(worker, sch response) {r}")
 
         else:
             logger.info("Checking if tasks are still pending")
@@ -1008,7 +1010,7 @@ class Worker(object):
             return
 
         task = self._scheduled_tasks[task_id]
-        logger.info(f'run_task: running {task_id} - {task}')
+        logger.info(f'run_task (worker): running {task_id} - {task}')
 
         task_process = self._create_task_process(task)
 

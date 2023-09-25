@@ -831,7 +831,7 @@ class Scheduler(object):
         * add additional workers/stakeholders
         * update priority when needed
         """
-        logger.info(f'add_task: {task_id}: status {status} resources {resources}')
+        logger.info(f'add_task: {task_id}: status {status} resources {resources} newdeps: {newdeps}')
         assert worker is not None
         worker_id = worker
         worker = self._update_worker(worker_id)
@@ -910,14 +910,15 @@ class Scheduler(object):
 
         if task_is_not_running or (task_started_a_run and running_on_this_worker) or new_deps:
             # don't allow re-scheduling of task while it is running, it must either fail or succeed on the worker actually running it
+            logger.info(f'add_task: {task.task_id} status changed: before {status}, now {task.status}, '
+                        f'is running? {task_is_not_running} started? {task_started_a_run}, '
+                        f'running on this worker? {running_on_this_worker}')
             if status != task.status or status == PENDING:
-                logger.info(f'add_task: status changed: before {status}, now {task.status}')
-
-
                 # Update the DB only if there was a acctual change, to prevent noise.
                 # We also check for status == PENDING b/c that's the default value
                 # (so checking for status != task.status woule lie)
                 self._update_task_history(task, status)
+
             self._state.set_status(task, PENDING if status == SUSPENDED else status, self._config)
 
         if status == FAILED and self._config.batch_emails:
@@ -1234,7 +1235,7 @@ class Scheduler(object):
                 greedy_workers[task.worker_running] -= 1
                 for resource, amount in six.iteritems((getattr(task, 'resources_running', task.resources) or {})):
                     greedy_resources[resource] += amount
-            logger.info(f"get_work: task {task}")
+            logger.info(f"get_work: task {task} {task.task_id}")
             logger.info(f"get_work: resources {task.resources}")
             logger.info(f"get_work: greedy_resources {json.dumps(greedy_resources, indent=2)}")
 
@@ -1309,7 +1310,7 @@ class Scheduler(object):
         else:
             reply['task_id'] = None
 
-        logger.info(f"get_work: reply {json.dumps(reply, indent=2)}")
+        logger.info(f"get_work:{reply['task_id']} reply {json.dumps(reply, indent=2)}")
 
         return reply
 
