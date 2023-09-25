@@ -831,7 +831,7 @@ class Scheduler(object):
         * add additional workers/stakeholders
         * update priority when needed
         """
-        logger.info(f'add_task: {task_id}: status {status} resources {resources} newdeps: {newdeps}')
+        logger.info(f'add_task: {task_id}: status {status} resources {resources} newdeps: {new_deps}')
         assert worker is not None
         worker_id = worker
         worker = self._update_worker(worker_id)
@@ -1240,10 +1240,10 @@ class Scheduler(object):
             logger.info(f"get_work: greedy_resources {json.dumps(greedy_resources, indent=2)}")
 
             if self._schedulable(task) and self._has_resources(task.resources, greedy_resources):
-                logger.info(f"get_work: task is schedulable and has resources")
+                logger.info("get_work: task is schedulable and has resources")
                 in_workers = (assistant and task.runnable) or worker_id in task.workers
                 if in_workers and self._has_resources(task.resources, used_resources):
-                    logger.info(f"get_work: task in_workers")
+                    logger.info("get_work: task in_workers")
                     best_task = task
                     batch_param_names, max_batch_size = self._state.get_batcher(
                         worker_id, task.family)
@@ -1261,7 +1261,7 @@ class Scheduler(object):
                             batched_params, unbatched_params = None, None
                 else:
                     workers = itertools.chain(task.workers, [worker_id]) if assistant else task.workers
-                    logger.info(f"get_work: assigning task to worker")
+                    logger.info("get_work: assigning task to worker")
                     for task_worker in workers:
                         if greedy_workers.get(task_worker, 0) > 0:
                             # use up a worker
