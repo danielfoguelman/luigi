@@ -591,7 +591,7 @@ class Worker(object):
         if task and kwargs.get('params'):
             kwargs['param_visibilities'] = task._get_param_visibilities()
 
-        logger.info(f'worker add task: task_id {task_id}, task {task}, *args {pprint.pformat(args)}, **kwargs {pprint.pformat(kwargs)}')
+        logger.info(f'worker add task: task_id {task_id}, task {task}, *args {json.dumps(args)}, **kwargs {json.dumps(kwargs)}')
         self._scheduler.add_task(*args, **kwargs)
 
         logger.info('Informed scheduler that task   %s   has status   %s', task_id, status)
