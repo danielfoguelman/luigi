@@ -958,7 +958,6 @@ class Worker(object):
                 assistant=self._assistant,
                 current_tasks=list(self._running_tasks.keys()),
             )
-            logger.info(f"get_work: {r.task_id}(worker, sch response) {r}")
 
         else:
             logger.info("Checking if tasks are still pending")
@@ -966,6 +965,7 @@ class Worker(object):
 
         running_tasks = r['running_tasks']
         task_id = self._get_work_task_id(r)
+        logger.info(f"get_work: {task_id} (worker, sch response) {json.dumps(r)}")
 
         self._get_work_response_history.append({
             'task_id': task_id,
