@@ -908,9 +908,10 @@ class Scheduler(object):
         running_on_this_worker = task.worker_running == worker_id
         logger.info(f'add_task: task not running {task_is_not_running} task started {task_started_a_run} in this worker {running_on_this_worker}')
 
+
         if task_is_not_running or (task_started_a_run and running_on_this_worker) or new_deps:
             # don't allow re-scheduling of task while it is running, it must either fail or succeed on the worker actually running it
-            logger.info(f'add_task: {task.task_id} status changed: before {status}, now {task.status}, '
+            logger.info(f'add_task: {task.id} status changed: before {status}, now {task.status}, '
                         f'is running? {task_is_not_running} started? {task_started_a_run}, '
                         f'running on this worker? {running_on_this_worker}')
             if status != task.status or status == PENDING:
