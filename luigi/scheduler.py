@@ -1236,7 +1236,7 @@ class Scheduler(object):
                 greedy_workers[task.worker_running] -= 1
                 for resource, amount in six.iteritems((getattr(task, 'resources_running', task.resources) or {})):
                     greedy_resources[resource] += amount
-            logger.info(f"get_work: task {task} {task.task_id}")
+            logger.info(f"get_work: task {task} {task.id}")
             logger.info(f"get_work: resources {task.resources}")
             logger.info(f"get_work: greedy_resources {json.dumps(greedy_resources, indent=2)}")
 
